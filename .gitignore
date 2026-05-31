@@ -1,0 +1,27 @@
+# Capture artifacts are large and stay out of the repo by default.
+# Hashes and per-file metadata go in ARTIFACTS.md; the underlying files
+# are kept in a separate immutable archive (see CHAIN_OF_CUSTODY.md).
+*.pcap
+*.pcap[0-9]*
+*.img
+*.bin
+*.squashfs
+artifacts/raw/
+artifacts/firmware/
+artifacts/captures/
+
+# Extracted rootfs trees
+rootfs_extracted/
+extracted/
+
+# Cracking working state
+crack/
+*.pot
+*.restore
+*.log
+
+# Editor / OS noise
+.DS_Store
+*.swp
+*.swo
+__pycache__/

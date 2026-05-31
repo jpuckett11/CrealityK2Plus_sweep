@@ -1,0 +1,281 @@
+# Creality K2 Plus, Final Findings Report
+
+**Investigator:** Jay Puckett (Obsidian Watch Group), investigations@obsidianwatch.org
+**GPG:** `9267 A71E 3F0A 4EED 2F97 3F9B A3E2 52F2 4635 CC6C`
+**Subject:** Creality K2 Plus 3D printer, firmware V1.1.5.5 (released 2026-05-08), OEM model code `CR0CN240110C10`, SoC Allwinner T113-S3.
+**Methodology:** [METHODOLOGY.md](METHODOLOGY.md). Full reports under [reports/](reports/). Artifact hashes in [ARTIFACTS.md](ARTIFACTS.md). Chain of custody in [CHAIN_OF_CUSTODY.md](CHAIN_OF_CUSTODY.md).
+**Status:** First-cut final.
+
+## Framing
+
+This report describes what was observed on a single Creality K2 Plus running firmware V1.1.5.5 during the investigation window. It documents network destinations, file contents, daemon activity, and firmware artifacts as observable facts. Where an observation has a benign explanation, that explanation is noted alongside any other plausible explanations. Where the investigator cannot determine intent or purpose, the report says so. The reader is left to draw conclusions appropriate to their own interest (consumer, regulator, security researcher).
+
+The reports below should be read together. No single observation in isolation is dispositive. Patterns across multiple observations may be informative but require independent corroboration.
+
+**On jurisdiction.** Several of the destinations documented in this report are operated by entities registered in or operating infrastructure in the People's Republic of China (Alibaba Cloud, the Chinese mirror domains of Creality, the academic-network NTP server, the Sensors Analytics SDK ingest endpoints). This is documented because data flowing to those destinations is subject to PRC data-access law (Cybersecurity Law 2017, Data Security Law 2021, Personal Information Protection Law 2021), under which operators can be compelled to provide stored data to authorities without notice to the data subject. The concern is jurisdictional: the customer is generally unaware that data routed to these destinations sits in a legal regime different from the one their consumer-protection rights derive from.
+
+This is not a statement about the engineers, employees, or customers of any Chinese company, nor a claim of intent. Most of the people who designed and operate these systems are doing standard product engineering. The compelled-access regime is a feature of the law, not of the individuals subject to it. The same observation would be made about a US-based service routing data to a destination subject to similar US compelled-access law without disclosure to the customer.
+
+Where this report uses terms like "Chinese-registered" or "Chinese-region", it refers to the jurisdiction the operator is subject to, not to a characterization of any individual.
+
+## 1. Observed facts
+
+### 1.1 Default root credentials
+
+The shipped `/etc/shadow` (extracted from the publicly downloadable OTA image) contains a SHA-256-crypt hash whose plaintext value is `creality_2024`. The hash bytes are identical to those produced by `crypt.crypt("creality_2024", "$5$d5o85tQWWFj2/jfn$")`. The investigator verified by SSH login to the live device.
+
+No init script in the extracted rootfs regenerates this password on first boot. The plaintext value is also documented in third-party setup guides (SimplyPrint, others).
+
+**Practical effect (what readers may reasonably infer):** any party with the firmware and network reachability to a K2 Plus on V1.1.5.5 can SSH as root using the documented default. Whether this is acceptable depends on the deployment environment.
+
+### 1.2 Persistent state of the consent flag
+
+`/mnt/UDISK/creality/userdata/config/system_config.json` on the live device contains:
+```json
+"agree_privacy": 1,
+"data_collect": 1
+```
+
+The investigator declined the privacy / Terms of Use dialog presented at first-boot setup. The on-disk values shown above are the same as the firmware's shipped default. The investigator could not determine, from external observation, whether the dialog wrote to this field at all, or whether the field has any runtime effect.
+
+`log_main` (Go binary, package `dev_agent`) contains an exported symbol `dev_agent/utils.AgreePrivacyStatus`. The investigator did not reverse-engineer the function body. The symbol's name suggests it reads a privacy-consent value.
+
+### 1.3 Outbound network traffic observed during idle operation
+
+Captured via ARP-MITM with TLS interception (mitmproxy + installed CA on the device's system trust store; no cert pinning encountered). Active during a ~30-minute window with the device idle (no user actions, no remote app open):
+
+| Destination | Port | Protocol | Frequency | Content |
+|---|---|---|---|---|
+| `api.crealitycloud.com` | 443 | TLS | ~1-2 sec polling | firmware update checks, slice/material profile sync, device-type lookups |
+| `mqtt.crealitycloud.com` (resolves to `47.253.214.226`, Alibaba Cloud LLC) | 1883 | MQTT, no TLS | persistent connection | device state telemetry (PUBLISH) + ThingsBoard RPC subscriptions |
+| `202.118.1.130` (`time.neu.edu.cn`, Northeastern University, Shenyang, China) | 123 | NTP | periodic | time sync. Reached without a DNS lookup. IP appears hardcoded in firmware. |
+| `162.159.200.123`, `208.113.130.146`, `203.107.6.88`, `23.155.72.147` | 123 | NTP | periodic | additional NTP sources, reached via DNS |
+
+The investigator did not observe traffic to user-facing endpoints (`submitH264JPG`, `submitVideoJwt`, `preSubmitTimelapse`, `reportAiNotice`) during the idle window. Such traffic was observed when the user opened the Creality phone app and viewed the camera (see §1.7).
+
+### 1.4 Headers and identifiers transmitted
+
+Every HTTPS request to `api.crealitycloud.com` includes custom headers prefixed `__CXY_*`:
+
+```
+__CXY_BRAND_:     creality
+__CXY_OS_VER_:    5.4.61            (printer's Linux kernel version)
+__CXY_OS_LANG_:   0
+__CXY_PLATFORM_:  10
+__CXY_DUID_:      <device serial, 14 hex chars derived from WiFi MAC>
+__CXY_APP_VER_:   1.1.5.5           (firmware version)
+__CXY_APP_CH_:    creality          (distribution channel)
+__CXY_APP_ID_:    creality_model
+__CXY_REQUESTID_: <per-request unique ID, timestamp-prefixed>
+__CXY_TIMEZONE_:  <seconds offset from UTC>
+__CXY_JWTOKEN_:   <JWT, present on authenticated calls>
+__CXY_UID_:       <CREALITY-UID>    (Creality user ID, see §1.5)
+```
+
+The JWT payload includes `sub` (device serial), `aud` (the same `__CXY_UID_` value), `iss` (`https://api.crealitycloud.com`), and `exp` (~1 month from issuance). Signing algorithm HS256.
+
+### 1.5 User ID present without account creation
+
+The `__CXY_UID_` value `<CREALITY-UID>` (10 digits) is present in every authenticated request. The investigator did not create a Creality Cloud account at any point in the investigation. The investigator declined the account-creation flow during initial setup.
+
+The investigator cannot determine from external observation whether:
+- The device is pre-provisioned with a UID at the factory, bound to the hardware serial;
+- The device generated and registered an anonymous UID on first boot;
+- The UID was assigned by Creality's backend during the device's first contact.
+
+In all three cases, the UID is bound to the device serial in the JWT.
+
+### 1.6 MQTT cleartext traffic content
+
+The MQTT connection to `47.253.214.226:1883` was captured cleartext via a workstation-side socat proxy (DNS spoof routed the printer's connection through the workstation, which forwarded transparently to the real broker). Observed in PUBLISH payloads:
+
+- Printer hostname, e.g. `K2Plus-XXXX`
+- Local LAN IP address of the printer
+- Production serial number
+- Firmware version, screen hardware version
+- Current toolhead X/Y/Z coordinates
+- Fan speeds, temperatures
+- Print-job state (filename, duration, progress)
+- LED state
+- Filament-system state
+- Various status flags (`video1`, `videoElapse`, `webrtcV2`, `upgradeStatus`, etc.)
+
+The printer SUBSCRIBED to:
+- `v1/devices/me/attributes/response/+`
+- `v1/devices/me/rpc/request/+`
+
+These are ThingsBoard IoT-platform topic conventions. The `rpc/request/+` subscription is the standard channel by which a server can invoke remote procedures on the device. Whether such RPCs are issued for purposes beyond those visible in the documented user-facing app is not determinable from external observation alone.
+
+### 1.7 Behavior observed when the user opens the camera in the phone app
+
+When the investigator opened the Creality phone app and selected the printer's camera:
+
+1. A new HTTPS call: `GET https://api.crealitycloud.com/api/cxy/ws/webrtc/signal/push/<device_sn>` (WebSocket-based WebRTC signaling)
+2. An MQTT RPC arrived on `v1/devices/me/rpc/request/<id>` with payload `{"method":"get","params":{"cfsList":1}}` (a query for Color Filament System state)
+3. The device responded via `v1/devices/me/rpc/response/<id>` with the requested state
+4. A TCP connection from the device to `47.254.52.250:3478` (Alibaba Cloud LLC, port 3478 = STUN/TURN for WebRTC NAT traversal)
+5. WebRTC media stream flowed between phone and printer (encrypted, not captured in clear; the device's MQTT telemetry includes `"features": "[\"videoInfo.videoEncryption\"]"`)
+6. The printer wrote video data to `/mnt/UDISK/timelapse/main_output.h264`; file grew during view and stopped growing when the view was closed.
+
+This sequence matches standard IoT remote-camera design (signaling via cloud, media via WebRTC TURN-relayed peer-to-peer). The investigator did not observe behavior in this path that is unexpected for the documented remote-camera feature.
+
+### 1.8 Endpoint inventory from firmware analysis (static)
+
+`strings usr/lib/libcrealitycloud.so` and `etc/appetc/alchemistp/config.json` yield the following cloud-endpoint references:
+
+| Type | Production (.com) | Chinese mirror (.cn) | Dev/Internal |
+|---|---|---|---|
+| API | `api.crealitycloud.com` | `api.crealitycloud.cn` | `api-dev.crealitycloud.cn` (HTTP) |
+| Admin | `admin-pre.crealitycloud.com` | `admin-pre.crealitycloud.cn` | |
+| MQTT | `mqtt.crealitycloud.com` | `mqtt.crealitycloud.cn` | `pre-tb-iot.crealitycloud.com:1883` (cleartext) |
+| CDN | `pic2-cdn.creality.com`, `pic-cdn.creality.com` | | `pic-cdn-dev.creality.com` |
+| Smart | | `c-smart.cxswyjy.com` | |
+| Telemetry | | `devdata.cxswyjy.com` | |
+| Object Storage | `oss-us-east-1.aliyuncs.com` (HTTP) | `oss-cn-hangzhou.aliyuncs.com` (HTTP) | |
+| Internal LAN | | | `172.23.88.185:8080`, `172.29.99.188:4020` |
+
+API endpoint paths discovered in `libcrealitycloud.so`:
+```
+/api/cxy/v2/firmware/checkUpgrade
+/api/cxy/v2/slice/profile/official/material/printerParameter
+/api/cxy/v2/device/printerTypeListNew
+/api/cxy/v2/device/user/onwerInfo                          [vendor typo "onwer"]
+/api/cxy/v2/device/user/preCommitLog
+/api/cxy/v2/device/user/localGcodeSubmit
+/api/cxy/v2/device/user/localPrint
+/api/cxy/v2/device/user/getAliyunSts
+/api/cxy/v2/device/user/reportAiNotice
+/api/cxy/v2/device/user/submitH264JPG
+/api/cxy/v2/device/submitVideoJwt
+/api/cxy/v2/device/preSubmitTimelapse
+/api/cxy/v2/device/registerDevice
+/api/cxy/v2/slice/profile/user/listJwt
+/api/cxy/v3/stem/firmware/stemModelDetail
+/api/cxy/v3/stem/firmware/stemModelList
+/api/cxy/ws/webrtc/signal/push/<device_sn>
+```
+
+The investigator observed live traffic to a subset of these (firmware checks, profile sync, type lookups, webrtc signal) during the capture window. The remaining endpoints were not exercised because the investigator did not perform actions (slicing, printing, AI use, account features) that would trigger them.
+
+### 1.9 `cxswyjy.com` domain ownership
+
+WHOIS:
+```
+Registrar:    Alibaba Cloud Computing (Beijing) Co., Ltd.
+Name Server:  DNS7.HICHINA.COM, DNS8.HICHINA.COM
+Expiry:       2026-12-31
+```
+
+`cxsw` is the pinyin abbreviation for the Chinese-language name of Creality (创想三维, ChuangXiang SanWei). `yjy` could be one of several pinyin abbreviations (the investigator cannot determine from the registration alone). The domain hosts `devdata.cxswyjy.com` (referenced in the firmware as the telemetry-upload endpoint per §1.10) and `c-smart.cxswyjy.com` (referenced as `SERVERURL` in `alchemistp/config.json`).
+
+The investigator did not locate any reference to `cxswyjy.com` in Creality's consumer-facing English or Chinese marketing material reviewed.
+
+### 1.10 Log upload manifest
+
+`etc/appetc/alchemistp/config.json` (read by the daemon stack at startup) contains:
+```
+"UploadFilePath": "/mnt/UDISK/creality/userdata/log/*;/mnt/UDISK/printer_data/logs/*;/var/log/*"
+"UploadFileName": "klippy.log;master-server.log;display-server.log;messages"
+"IDC_SERVER_URL": "https://devdata.cxswyjy.com/api/v1/"
+```
+
+`/var/log/messages` on this OpenWrt system contains kernel events, daemon state changes, and `dropbear` authentication events. The configured destination for the upload is `devdata.cxswyjy.com`. The investigator did not capture a successful upload of this file in clear during the investigation window; the destination and content are taken from the firmware's own configuration.
+
+### 1.11 MAC address handling
+
+- WiFi interface MAC: the OUI prefix observed on the test unit is not present in the IEEE OUI registry checked by the investigator (`macvendors.com`, local `oui.txt` lookups, Wireshark `manuf` database). The U/L bit is 0 (the value is presented as a globally-unique factory MAC).
+- Wired interface MAC: the U/L bit is 1 (the value is locally-administered / random). The vendor portion does not correspond to any IEEE assignment.
+- When the user disabled WiFi via the device's settings menu, Moonraker's `/machine/system_info` endpoint no longer reported a `wlan0` interface. The MAC associated with the WiFi mode was no longer enumerated by the device.
+
+The investigator cannot determine, from external observation, the policy by which these MACs are generated or persisted on the device.
+
+### 1.12 Cryptographic material in the firmware
+
+`usr/share/cert/` contains:
+- `server.crt`: CN=`My Server`, O=`Internal Service`, C=`CN`. Valid 2025-08 to 2026-08.
+- `ca.crt`: CN=`My Private CA`, O=`Internal Network`, C=`CN`. Self-signed. Valid 2025-08 to 2035-08.
+- `server.key`: PEM-encoded plaintext private key for `server.crt`.
+
+The naming pattern (`My Server`, `My Private CA`) is the default placeholder for the OpenSSL certificate-generation prompts when fields are not filled in. The certificates are present in the publicly downloadable firmware and therefore on every K2 Plus running this firmware.
+
+The investigator did not determine whether any service running on the device actually uses this cert pair, or whether it is residual from a build process.
+
+### 1.13 CrealityPrint slicer (companion software)
+
+CrealityPrint v7.1.1.4472 (released 2026-04-29) was also analyzed (installer download, static analysis after install). Observations:
+
+- The slicer's UI is rendered in an embedded Microsoft Edge WebView2 (Chromium). Some UI sections load HTML/JS from Creality cloud servers, meaning UI content can change between sessions without a software update.
+- `src/slic3r/GUI/AnalyticsDataUploadManager.cpp` (in the publicly available source at `CrealityOfficial/CrealityPrint`) contains URL strings:
+  - `https://www.crealitycloud.cn/api/rest/bicollector/front/sa/data` (selected when country code is CN)
+  - `https://www.crealitycloud.com/api/rest/bicollector/front/sa/data` (selected otherwise)
+  - `https://api-dev.crealitycloud.cn/api/rest/bicollector/front/sa/data` (selected for Alpha/Beta builds)
+- The path component `sa/data` is the standard Sensors Analytics (神策数据) ingest endpoint pattern. Sensors Analytics is a Chinese behavioral-analytics SDK with documented HTTP interface.
+- The slicer's source includes enum cases for tracking ~50 model-action events (`ANALYTICS_MODEL_ACTION_ADD`, `MOVE`, `ROTATE`, `SCALE`, `HOLLOW`, `CUT`, `BOOLEAN`, `MEASURE`, etc.) and ~50+ string event names (`click_event`, `ai_service_call`, `click_home_page_crealitymall`, etc.).
+- `resources/data/update_config.json`:
+  ```
+  "provider": "squirrel.windows",
+  "update_feed": "http://172.20.180.14/shared/crealityprint/windows"
+  ```
+  The IP is an RFC1918 address (within Creality's corporate network). It is not reachable from a consumer's network. The investigator did not determine the fallback update mechanism.
+
+The investigator did not run the slicer long enough to capture live analytics traffic in clear.
+
+## 2. What the investigation did NOT establish
+
+- **No certificate pinning was observed** on the device's HTTPS clients. The mitmproxy CA, once installed in the system trust store, was accepted without complaint. This may or may not be true of other firmware versions or other Creality models.
+- **No cleartext credentials were observed in transit** during the capture window. The JWT bound to the device is a credential, but it is HS256-signed and the signing key is held by Creality (not visible from the client side).
+- **No exploitation was performed.** All findings derive from (a) the publicly downloadable OTA image, (b) the publicly documented default password, or (c) ARP MITM on the investigator's own LAN.
+
+## 3. Recommended mitigations for owners
+
+These are suggestions a reader may consider; the appropriateness depends on the owner's preferences.
+
+### 3.1 If the cloud features (remote print, remote camera) are used
+
+- Block outbound traffic to `202.118.1.130` (the hardcoded Chinese NTP IP). The device has other configured NTP sources; time sync is unaffected.
+- Block outbound traffic to the IPs `devdata.cxswyjy.com` resolves to (these change). This severs the log-upload channel.
+
+### 3.2 If the cloud features are not used
+
+Block the printer from internet egress entirely. Place it on a VLAN or guest network with no WAN. Locally-accessible services (Klipper, Moonraker, web UI, WebRTC stream on the LAN) continue to function.
+
+### 3.3 Custom firmware
+
+Vanilla Klipper + MainsailOS or FluiddPi can be installed in place of the Creality daemon stack after gaining root via the documented default password. This eliminates the cloud-comms components entirely. Voids warranty.
+
+## 4. Recommended disclosure routes
+
+| Recipient | What |
+|---|---|
+| FTC Bureau of Consumer Protection | The credential-collection clause in the ToU. The on-disk consent default. The mirror infrastructure on `.cn` domains. |
+| Mozilla *Privacy Not Included* | Full finding set for inclusion in their consumer-IoT privacy ratings. |
+| CISA | The hardcoded foreign-academic NTP IP, the cleartext MQTT, the plaintext cert/key shipped in firmware. |
+| State AGs (California first) | CCPA/CPRA sensitive-PI implications of the credential-collection ToU clauses. |
+| Creality (coordinated disclosure) | Full finding set with 90-day embargo. |
+
+## 5. Reproducibility
+
+- Firmware: `https://file2-cdn.creality.com/file/061e5074c360584d65ff4ae3aba9c028/CR0CN240110C10_R_202605081127_ota_img_V1.1.5.5.img`. SHA-256 in [ARTIFACTS.md](ARTIFACTS.md). Extract with `cpio -id` then `unsquashfs`.
+- Static endpoint inventory: `strings usr/lib/libcrealitycloud.so | grep -E 'https?://|mqtt'` and read `etc/appetc/alchemistp/config.json`.
+- Default password verification: `python3 -c "import crypt; print(crypt.crypt('creality_2024', '\$5\$d5o85tQWWFj2/jfn\$'))"`. Compare to the `etc/shadow` hash in the firmware.
+- Live API decryption: install mitmproxy CA in `/etc/ssl/certs/ca-certificates.crt` on the device, spoof `api.crealitycloud.com` to the workstation via local DNS, run `mitmdump --mode reverse:https://api.crealitycloud.com:443 --listen-port 443`.
+- MQTT cleartext: `socat TCP-LISTEN:1883,fork TCP:47.253.214.226:1883` on the workstation, spoof `mqtt.crealitycloud.com` via local DNS, restart the printer's `app-server` daemon to force MQTT reconnect.
+
+## 6. Limitations
+
+- Single device, single firmware version. Firmware-level observations generalize to all V1.1.5.5 units. Runtime observations (specific UID, specific timestamps) reflect this unit during this window.
+- TLS payload capture is partial. `api.crealitycloud.com` flows were fully decrypted. `devdata.cxswyjy.com`, `pic2-cdn.creality.com`, and `c-smart.cxswyjy.com` flows were not (additional mitmproxy reverse listeners would be needed for SNI-based routing).
+- `/api/cxy/v3/stem/firmware/stemModel*` endpoints were referenced in firmware but not exercised during the capture window.
+- The CFS (Color Filament System) accessory firmware (`CR0CN200400C10`, separate OTA image) was not analyzed.
+- The WebRTC media stream was not captured in cleartext (encrypted via SRTP per the device's reported feature flag).
+- The investigator did not perform physical disassembly. Hardware-component identification was not done.
+
+## 7. Investigator and contact
+
+Jay Puckett, Obsidian Watch Group
+investigations@obsidianwatch.org
+GPG `9267 A71E 3F0A 4EED 2F97 3F9B A3E2 52F2 4635 CC6C` (ed25519)
+
+Repository: `https://github.com/jpuckett11/CrealityK2Plus_sweep`
+
+For coordinated disclosure or supplementary material privately, contact the investigator via the GPG-encrypted email above. The repository's commits are GPG-signed by the investigator. Any unsigned commit on `main` should be considered suspect.
