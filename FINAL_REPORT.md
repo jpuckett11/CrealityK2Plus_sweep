@@ -42,7 +42,7 @@ The investigator declined the privacy / Terms of Use dialog presented at first-b
 
 ### 1.3 Outbound network traffic observed during print operation
 
-Captured via ARP-MITM with TLS interception (mitmproxy + installed CA on the device's system trust store; no cert pinning encountered). Active during a ~30-minute window with the device idle (no user actions, no remote app open):
+Captured via ARP-MITM with TLS interception (mitmproxy + installed CA on the device's system trust store; no cert pinning encountered). Active during a ~30-minute window with no user actions on the cloud features and no remote app open. The printer was actively printing throughout the window (a ~60-minute Klipper gcode job ran to completion during the investigation):
 
 | Destination | Port | Protocol | Frequency | Content |
 |---|---|---|---|---|
@@ -51,7 +51,7 @@ Captured via ARP-MITM with TLS interception (mitmproxy + installed CA on the dev
 | `202.118.1.130` (`time.neu.edu.cn`, Northeastern University, Shenyang, China) | 123 | NTP | periodic | time sync. Reached without a DNS lookup. IP appears hardcoded in firmware. |
 | `162.159.200.123`, `208.113.130.146`, `203.107.6.88`, `23.155.72.147` | 123 | NTP | periodic | additional NTP sources, reached via DNS |
 
-The investigator did not observe traffic to user-facing endpoints (`submitH264JPG`, `submitVideoJwt`, `preSubmitTimelapse`, `reportAiNotice`) during the idle window. Such traffic was observed when the user opened the Creality phone app and viewed the camera (see §1.7).
+The investigator did not observe traffic to user-facing endpoints (`submitH264JPG`, `submitVideoJwt`, `preSubmitTimelapse`, `reportAiNotice`) during this window. Such traffic was observed when the user opened the Creality phone app and viewed the camera (see §1.7).
 
 ### 1.4 Headers and identifiers transmitted
 
@@ -242,6 +242,10 @@ Block the printer from internet egress entirely. Place it on a VLAN or guest net
 ### 3.3 Custom firmware
 
 Vanilla Klipper + MainsailOS or FluiddPi can be installed in place of the Creality daemon stack after gaining root via the documented default password. This eliminates the cloud-comms components entirely. Voids warranty.
+
+### 3.4 Cloud-comm daemons can be disabled without affecting printing
+
+The Creality cloud-comm daemons (`master-server`, `app-server`, `log_main`, `webrtc`) operate independently of the Klipper / MCU print path. Verified observationally during this investigation: a ~60-minute print ran to completion while the named daemons were repeatedly killed and restarted as part of the MITM setup, without interrupting the print or producing observable defects. Owners with root SSH access who wish to retain local printing functionality while disabling phone-home behavior can stop these daemons (and prevent procd from restarting them) without losing the ability to print via Klipper / Moonraker on the LAN.
 
 ## 4. Recommended disclosure routes
 
