@@ -40,7 +40,7 @@ The investigator declined the privacy / Terms of Use dialog presented at first-b
 
 `log_main` (Go binary, package `dev_agent`) contains an exported symbol `dev_agent/utils.AgreePrivacyStatus`. The investigator did not reverse-engineer the function body. The symbol's name suggests it reads a privacy-consent value.
 
-### 1.3 Outbound network traffic observed during idle operation
+### 1.3 Outbound network traffic observed during print operation
 
 Captured via ARP-MITM with TLS interception (mitmproxy + installed CA on the device's system trust store; no cert pinning encountered). Active during a ~30-minute window with the device idle (no user actions, no remote app open):
 
