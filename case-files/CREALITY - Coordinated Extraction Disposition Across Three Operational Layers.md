@@ -881,6 +881,86 @@ The case file's §1.4 and §1.10 documentation should be considered
 **lower-bound** estimates of the device's outbound communication
 surface. The actual surface is larger and is not fully mapped.
 
+**Architectural pattern: edge-stage exfiltration via Western cloud
+infrastructure for upload-speed optimization**
+
+The combined evidence of `devdata.cxswyjy.com` on AWS US-East-1 plus
+`pic2-cdn.creality.com` and `file2-cdn.creality.com` on Cloudflare's
+global edge network describes a specific operational architecture:
+two-stage exfiltration with Western cloud edge infrastructure as the
+speed-optimization layer.
+
+Stage 1 (visible to the consumer's network observer): the K2 Plus
+device uploads telemetry, image data, or other content to AWS US-East-1
+(devdata.cxswyjy.com → 100.51.159.195) or to Cloudflare edge nodes
+(pic2-cdn.creality.com, file2-cdn.creality.com). The upload is fast
+because the destinations are geographically close to the consumer (US
+customer → US-East-1 AWS → tens of milliseconds latency). The
+consumer's network observation window is therefore short. The bandwidth
+event is brief enough that consumer-grade traffic monitoring may not
+notice it.
+
+Stage 2 (not visible to the consumer's network observer): the data
+uploaded to the AWS or Cloudflare edge nodes is synced server-to-server
+to Creality's PRC backend infrastructure on Creality's own schedule and
+through Creality's own infrastructure. The consumer's network is not
+involved in this stage. There is no consumer-side bandwidth event. The
+data sync can take whatever duration Creality chooses; the timing does
+not matter because it is no longer in the consumer's observation
+surface.
+
+The structural significance of this two-stage architecture:
+
+1. **It minimizes the consumer-side observation window.** The upload
+   completes quickly because the edge nodes are geographically close.
+   The consumer sees a short bandwidth spike rather than a sustained
+   transfer. Consumer-grade monitoring tools (router-level bandwidth
+   dashboards, ISP statistics) are less likely to flag short transfers
+   than sustained ones.
+
+2. **It hides the operator's actual location from consumer-side
+   network observation.** The consumer's network observer sees traffic
+   to AWS US-East-1 and Cloudflare edge nodes - both Western cloud
+   infrastructure that consumers and consumer-grade tools tend to treat
+   as benign. The PRC operator's actual location only becomes visible
+   if the consumer reverse-resolves the destination domain
+   (`devdata.cxswyjy.com` is the Creality Chinese-language acronym
+   `ChuangXiang SanWei + YJY`, which English-language consumer
+   materials do not surface).
+
+3. **It speeds up the data flow off the consumer's device.** Faster
+   uploads mean less time for the consumer to interrupt, less time
+   for the consumer to notice, and less time for any consumer-side
+   policy enforcement to inspect or block the traffic. Speed
+   optimization in the upload direction is operationally consistent
+   with detection-window minimization.
+
+4. **It is technically indistinguishable from legitimate cloud-edge
+   acceleration patterns.** Major Western consumer services (Netflix,
+   Spotify, social media) use Cloudflare and AWS edge nodes for
+   legitimate latency reduction. The K2 Plus's use of the same
+   infrastructure for telemetry-upload speed optimization is
+   architecturally identical to legitimate use cases. The intent
+   distinction (legitimate consumer-service routing vs. detection-
+   window minimization) cannot be made from the technical evidence
+   alone; it requires the analytical framing of the broader extraction
+   disposition the case file documents.
+
+This pattern is documented in surveillance malware analysis literature
+under the "edge exfiltration" or "edge-staged C2" pattern. It is the
+standard architecture for operators who want minimum detection window
+on the target side while maintaining operator-side data ownership. The
+K2 Plus's implementation of this pattern, for consumer telemetry and
+image data, is consistent with the extraction disposition the case
+file documents elsewhere.
+
+The case file does not assert that Creality designed this architecture
+with surveillance-malware intent. The case file documents that the
+architecture is operationally equivalent to surveillance-malware edge
+exfiltration patterns regardless of stated intent. The architectural
+choice produces the surveillance-friendly properties whether or not
+intent matches.
+
 ##### Cross-references
 
 - §1.4 documents the May 2026 outbound destination inventory; the
