@@ -1732,20 +1732,141 @@ destinations in their codebase; the bandwidth dropped immediately
 post-killall) collectively support the interpretation that the
 lockdown is effective.
 
-**Structural finding**: the K2 Plus's cloud-side surveillance
-architecture is **decouplable from the 3D printing function**.
-Creality has chosen to bundle the cloud-side architecture with the
-printing function and to enable the cloud-side architecture by
-default with the consent UI theater documented in §1.1. The choice
-to bundle and default-enable the surveillance is engineering
-decision, not technical necessity. Customers who wish to use the K2
-Plus as a 3D printer without the surveillance architecture can do
-so by stopping the cloud-side daemons; the daemons are not required
-for the printer to function. The case file documents this as a
-structural finding because it affects both the consumer-protection
-analysis (the cloud features are not necessary for the product as
-sold) and the regulatory analysis (Creality could have shipped a
-non-surveilling 3D printer; they chose to ship a surveilling one).
+**Structural finding (initial framing)**: the K2 Plus's cloud-side
+surveillance architecture is **decouplable from the 3D printing
+function**. Creality has chosen to bundle the cloud-side architecture
+with the printing function and to enable the cloud-side architecture
+by default with the consent UI theater documented in §1.1.
+
+**Structural finding (revised after post-lockdown observation - this
+is the operationally-correct framing)**: the cloud-side architecture
+is **NOT actually decouplable** from the device function. The K2 Plus
+**requires** at least a subset of the cloud-side daemons to function
+on the network at all. When the `/etc/init.d/app` script (which
+bundles `master-server`, `app-server`, `audio-server`, `wifi-server`,
+`display-server`, `upgrade-server`, `web-server`, and `Monitor`) was
+disabled via chmod -x to prevent restart at boot, the K2 Plus
+empirically failed to maintain network connectivity across three
+reboot cycles (verified 2026-06-24 on the investigator's device).
+
+The empirical evidence:
+
+- The device was confirmed off the LAN after three reboots: MAC
+  `fc:ee:28:0f:17:52` not present in ARP table, no mDNS announcement,
+  no response to nmap or ping
+- All other LAN devices remained reachable; the LAN itself was
+  operating normally
+- The K2 Plus's hardware was confirmed powered on by the device
+  owner; the touchscreen was responsive but the device was unable to
+  establish WiFi or LAN connectivity
+
+The interpretation: the `/etc/init.d/app` script includes `wifi-server`,
+which appears to be required for the device's WiFi association
+beyond what the standard OpenWrt network stack provides. Without
+`wifi-server` running, the device's WiFi association does not
+complete. The OpenWrt network stack alone is insufficient for the
+device's network function.
+
+**This is a structural finding meaningfully worse than the original
+framing**:
+
+Original framing: "Creality could have shipped a non-surveilling 3D
+printer; they chose to ship a surveilling one."
+
+Revised framing: **"Creality has engineered the device such that the
+3D printer cannot function on the network without the surveillance
+architecture. The customer cannot opt out of the cloud-side
+architecture; doing so disables the printer's basic connectivity."**
+
+The customer-protection implications:
+
+1. **The cloud-side infrastructure is not "optional" as marketed; it
+   is mandatory for the device to function.** Marketing claims that
+   describe cloud features as optional are inconsistent with the
+   operational reality.
+
+2. **The vendor has a built-in kill switch.** If Creality's cloud
+   infrastructure goes down, becomes inaccessible from the customer's
+   country, or refuses to serve a specific customer, the customer's
+   device becomes non-functional. The customer cannot fall back to
+   local-only operation.
+
+3. **The purchase model is effectively SaaS-bound hardware, not
+   consumer-owned hardware.** The customer paid for a printer they
+   cannot use without continued cloud-side service from a PRC-
+   domiciled vendor. This is structurally analogous to subscription
+   software where the user pays for ongoing access; it is not
+   structurally analogous to a consumer goods purchase where the
+   user owns the product.
+
+4. **The customer cannot self-protect against the documented
+   surveillance.** Any consumer who, after reading this case file
+   and deciding the documented surveillance architecture is
+   unacceptable, attempts to operate the K2 Plus in local-only mode
+   discovers the device does not function in that mode. The
+   customer's only options are: (a) accept the surveillance, (b)
+   stop using the device entirely, or (c) acquire a different
+   printer.
+
+5. **The marketing-to-reality gap is materially worse.** Beyond the
+   data-collection-scope gap (continuous camera capture, system log
+   exfiltration, persistent PRC infrastructure connection), the
+   functional-requirement gap exists. The "optional cloud features"
+   marketing language does not match the operational requirement
+   that the cloud architecture be running for the device to
+   function.
+
+The regulatory implications:
+
+1. **Magnuson-Moss Warranty Act**: the device sold as a "3D printer"
+   may not satisfy the implied warranty of merchantability if it
+   does not function as a 3D printer without continued vendor-side
+   service. Implied warranty of fitness for the particular purpose
+   (consumer 3D printing) is similarly affected.
+
+2. **FTC Section 5 deceptive practices**: marketing the cloud
+   features as "optional" while the operational reality requires
+   them is potentially deceptive.
+
+3. **CCPA and similar state privacy laws**: if the data collection
+   cannot be declined without the device ceasing to function, the
+   notion of "consent" to data collection is functionally impossible
+   to give meaningfully. Consent that cannot be declined without
+   product non-function is not consent under any reasonable legal
+   framework.
+
+4. **State consumer protection laws regarding "kill switch"
+   provisions**: several state laws regulate manufacturer remote
+   disablement of consumer goods. Creality's architecture is the
+   converse: continuous vendor-side service is REQUIRED for the
+   device to function, which is the kill-switch architecture
+   operating by default.
+
+5. **FCC equipment authorization integrity**: if the device's
+   network behavior depends on cloud-side services, the as-shipped
+   network behavior may not match the as-authorized network behavior
+   in the FCC equipment authorization record.
+
+**This finding strengthens every regulatory submission in the case
+file substantially. The customer-impact framing is no longer "you
+have a surveilling printer you can choose to use." It is "you have
+a printer that requires you to be surveilled in order to function."**
+
+The recovery path for the investigator's device: factory reset via
+the touchscreen system menu. The factory reset will restore the
+default configuration including chmod +x on the disabled init
+scripts, the default root credential `creality_2024`, the default
+consent flags at `1`, and the default `/etc/hosts` without the
+DNS-sinkhole entries. The device will return to functional state
+with the cloud-side surveillance architecture restored to its
+default-on configuration. The lockdown can be re-attempted later
+with the corrected approach (preserve `wifi-server` and
+`display-server`; disable only the actually-cloud-talking daemons;
+install SSH key authentication before locking the password).
+
+The case file documentation of these findings persists regardless of
+the device's recovery state. The empirical evidence is captured. The
+finding stands.
 
 ##### Cross-references
 
