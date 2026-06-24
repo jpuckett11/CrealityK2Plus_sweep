@@ -497,6 +497,136 @@ identity-blocked for investigator per §2.5). Targeted samples:
 
 Multi-board sweep, not single-board sweep, per the methodology in §6.
 
+#### 1.13.8 Live verification, 2026-06-24: continuous camera capture and persistent cloud-side registration
+
+A live verification on the same K2 Plus device (firmware V1.1.5.5,
+device identifier K2Plus-1752, MAC `fc:ee:28:0f:17:52`) was conducted
+2026-06-24 by SSH using the documented default root credential. The
+verification was prompted by the OWG investigator's question of
+whether the camera was being exfiltrated in real time. Findings:
+
+**Running camera-pipeline processes (concurrent with no active local
+print job)**:
+
+- `cam_app -i /dev/v4l/by-id/main-video0 -t 0 -w 1920 -h 1080 -f 15 -c`
+  (PID 2594, 6+ minutes accumulated CPU time, continuous capture mode)
+- `webrtc_local` (PID 2829)
+- `webrtc 123715280F1752 2` (PID 3164, arguments are the device's
+  mDNS service identifier and a session/stream index)
+
+The cam_app process runs continuously regardless of whether a viewing
+session is active. The camera frames at 1920x1080@15fps are produced
+continuously and made available to any process that consumes from
+the device or from the webrtc_local pipeline.
+
+**Active outbound connections during the verification window**:
+
+- `192.168.1.220:35978 → 47.253.214.226:1883` ESTABLISHED, PID
+  3477/app-server. The persistent MQTT connection to Alibaba Cloud
+  documented in §1.4 of this case file. Active, idle keepalive
+  posture during the verification window.
+- `192.168.1.220:9999 → 45.29.169.29:36686` ESTABLISHED, PID
+  3480/web-server. Active video stream to the device-owner's WAN IP
+  via NAT loopback (the investigator was viewing the camera on a
+  same-LAN desktop app session at the time; WebRTC ICE selected the
+  server-reflexive candidate path rather than the host candidate,
+  routing the video bytes via NAT hairpin through the owner's router
+  rather than direct LAN-to-LAN).
+
+**Listening services bound to 0.0.0.0 (externally reachable)**:
+
+| Port | Service | Process |
+|---|---|---|
+| 22 | SSH (dropbear, default credential `creality_2024`) | dropbear |
+| 80 | HTTP | web-server |
+| 443 | HTTPS | web-server |
+| 4408 | HTTP (alternate) | nginx |
+| 5037 | Android Debug Bridge (`adbd`) | adbd |
+| 7125 | Moonraker API (Python) | python |
+| 8000 | WebRTC | webrtc_local |
+| 9998 | HTTP (alternate) | web-server |
+| 9999 | HTTP (alternate, the port used by the desktop app session) | web-server |
+| 48029 | WebRTC | webrtc_local |
+
+ADB exposure on port 5037 is operationally significant. ADB provides
+remote shell, file transfer, and process execution capabilities at
+the root level. Any party with network reachability to the K2 Plus
+on port 5037 can establish an ADB session and execute arbitrary
+commands. This is a remote-code-execution vector exposed by default
+on a consumer 3D printer.
+
+**Bandwidth profile during the verification window**:
+
+10-second sampling of `/proc/net/dev` showed approximately 1.07 Mbps
+sustained outbound on wlan0 (TX bytes increment of 1,336,830 bytes
+over 10 seconds). The bandwidth profile is consistent with H264 video
+at 1920x1080@15fps and corresponds to the active video stream to the
+NAT-loopback session described above. Inbound traffic was minimal
+(~1.9 KB/sec).
+
+**The architectural finding the live verification confirms**:
+
+The K2 Plus camera capture pipeline is operationally decoupled from
+viewing-session state. The camera is captured continuously while the
+device is powered on. The webrtc_local and webrtc cloud-registration
+daemons run continuously with the device's serial number as the
+registration argument. The MQTT connection to Alibaba Cloud is
+persistent. The architecture is designed such that:
+
+1. Camera frames are perpetually available to any process running on
+   the device, whether or not a viewing session is currently
+   established.
+2. The device is registered with Creality's WebRTC signaling
+   infrastructure at all times, allowing any cloud-side party with
+   access to the registration to initiate a relay session against the
+   device.
+3. The MQTT channel to Alibaba Cloud is continuously open, allowing
+   continuous device-state telemetry and providing a persistent
+   command-channel-class connection from PRC-jurisdiction
+   infrastructure into the device on the consumer's home network.
+4. ADB exposure on port 5037 provides a parallel remote-shell vector
+   accessible to anyone on the LAN, or remotely if the device's port
+   5037 is exposed to the WAN via router port forwarding or UPnP.
+
+The capacity for camera exfiltration exists at the architecture
+level regardless of whether the capacity is exercised in any given
+verification window. The architectural extraction-disposition framing
+this case file documents in §4 of the umbrella case file is
+substantiated by the live verification: the architecture is
+permanently configured for cloud-side observability and access to
+the device's camera, telemetry, and shell.
+
+**Consent flags during the verification window**:
+
+`system_config.json` continues to show `agree_privacy: 1` and
+`data_collect: 1`, the firmware-default values that persist
+regardless of consumer consent decisions per §1.1. The 2026-06-24
+live verification re-confirms the May 2026 finding that consent
+state is not respected at the on-disk level.
+
+**Limitations of the 2026-06-24 verification window**:
+
+The verification window did not capture (a) the periodic API polls to
+`api.crealitycloud.com` documented in §1.4 (event-driven, intervals
+of minutes; did not fire during the window), (b) the periodic NTP
+poll to `time.neu.edu.cn` (`202.118.1.130`, hardcoded per §1.3), (c)
+the Sensors Analytics SDK behavioral telemetry to the `sa/data`
+ingest endpoint (§1.9), or (d) the Tencent Hunyuan AI-feature data
+flow to `ai-cn.crealitycloud.cn` and `ai-usa.crealitycloud.com`
+(§1.8). These are documented as architectural components of the
+device's outbound communication and were captured in the May 2026
+sweep, but were not exercised during the 2026-06-24 verification
+window because the relevant features (firmware update poll, NTP
+sync, behavioral telemetry burst, AI feature use) did not happen
+during the window. They remain part of the architectural finding.
+
+A longer-window capture (e.g., a 30-60 minute observation or a
+full-print-cycle observation) would capture the periodic outbound
+bursts and provide a complete picture of the device's egress
+behavior. The 2026-06-24 verification window was sufficient to
+confirm the continuous-camera-capture and persistent-cloud-
+registration findings.
+
 #### 1.13.7 Critical-path chips warranting Depth 3 attention regardless of Depth 1/2 disposition (PENDING)
 
 To be populated. Per §6 methodology, the following chip categories
