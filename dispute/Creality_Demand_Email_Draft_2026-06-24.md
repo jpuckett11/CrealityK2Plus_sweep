@@ -237,10 +237,9 @@ case file they can reference.
 
 1. Fill in your actual order number in the subject line and where
    noted.
-2. Confirm Affirm is the correct payment provider for THIS order
-   (you've used multiple payment methods across the various
-   purchases per the conversation history; this email should name
-   the specific provider for this disputed order).
+2. Affirm is confirmed as the sole payment provider for the entire
+   order (printer + CFS + Otter bundle, all financed via Affirm at
+   point of purchase). The email correctly references Affirm.
 3. The list of filing targets is comprehensive. If you want to
    narrow it (e.g., remove FCC if you're not planning to file
    there), edit accordingly. Keeping items on the list that you do
