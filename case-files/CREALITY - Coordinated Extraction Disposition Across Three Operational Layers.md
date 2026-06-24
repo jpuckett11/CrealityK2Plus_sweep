@@ -1105,6 +1105,74 @@ classification tasks the device is participating in, and assess
 whether the AI processing extends beyond fault detection in the
 documented evidence.
 
+**Redundant telemetry pipelines: parallel collection architecture**
+
+The 2026-06-24 short-window MITM capture (interrupted by wlp11s0
+interface drop during ARP poisoning, captured ~7-22 minutes of
+intermittent observation) identified an additional AWS EC2 endpoint
+the K2 Plus connects to: `54.227.8.154` (AWS Ashburn, Virginia,
+US-East-1, `ec2-54-227-8-154.compute-1.amazonaws.com`). This brings
+the documented AWS EC2 endpoint count to three distinct endpoints, all
+in AWS US-East-1:
+
+- 100.51.159.195 — serves devdata.cxswyjy.com (PRC-language telemetry)
+- 52.22.154.99 — undocumented purpose
+- 54.227.8.154 — undocumented purpose (Ashburn VA, additional region)
+
+Combined with the documented infrastructure from §1.4-§1.10 and the
+SNI inventory above, the K2 Plus's parallel telemetry/data-collection
+endpoints are:
+
+| Endpoint | Carries |
+|---|---|
+| Alibaba Cloud MQTT (47.253.214.226:1883, cleartext) | Full device state continuous (FINAL_REPORT §1.6) |
+| AWS US-East-1 #1 (100.51.159.195 / devdata.cxswyjy.com) | PRC-language telemetry |
+| AWS US-East-1 #2 (52.22.154.99) | Undocumented |
+| AWS US-East-1 #3 (54.227.8.154 / Ashburn VA) | Undocumented |
+| pic2-cdn.creality.com (Cloudflare) | Image upload pipeline |
+| Sensors Analytics SDK `sa/data` (per firmware analysis §1.9) | Behavioral event telemetry |
+
+At least four distinct telemetry/data-collection endpoints running in
+parallel during routine device operation. Multiple parallel pipelines
+collecting overlapping or related data categories.
+
+The structural finding: this is **redundant collection architecture**,
+not specialized collection architecture. A legitimate consumer-IoT
+service would consolidate to one telemetry endpoint per data category:
+fault detection to one model endpoint, device state to one MQTT
+endpoint, image processing to one CDN. Multiple parallel pipelines
+for overlapping data categories serves four specific operator-side
+purposes:
+
+1. **Reliability for the operator.** If one endpoint goes down or
+   becomes unreachable, the others continue. The operator never loses
+   data flow even during partial infrastructure outages.
+
+2. **Resistance to consumer blocking.** A customer attempting to
+   block telemetry by blocking one IP, DNS query, or firewall rule
+   does not interrupt data flow because the other endpoints continue.
+   To fully block, the customer must identify and block ALL parallel
+   pipelines simultaneously. Asymmetric defense burden: the operator
+   adds an endpoint with one engineering decision; the customer must
+   identify and block N endpoints.
+
+3. **Multiple downstream consumers.** Different endpoints likely feed
+   different backend systems: fault-detection AI, content-
+   identification AI, behavioral analytics, telemetry analytics,
+   geographic intelligence. The multiplicity at the collection layer
+   mirrors the multiplicity of downstream uses.
+
+4. **Obfuscated attribution.** With collection going to 3+ endpoints
+   under different domain names and provider footprints, blocking
+   individual destinations gives the customer misleading "I blocked
+   it" feedback while data still flows through other paths the
+   customer hasn't identified.
+
+This is the operational signature of architectures designed for
+data-exfiltration resilience, documented in surveillance-malware
+analysis literature. The K2 Plus's implementation is operationally
+equivalent to that pattern regardless of stated intent.
+
 ##### Cross-references
 
 - §1.4 documents the May 2026 outbound destination inventory; the
