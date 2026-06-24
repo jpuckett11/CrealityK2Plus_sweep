@@ -1235,6 +1235,68 @@ delivery in response to consumer interaction. Empirical conditions
 verified 2026-06-24 with full network visibility and explicit no-user-
 activity controls.
 
+**No coordinated vulnerability disclosure (CVD) program documented**
+
+Creality does not maintain a documented coordinated vulnerability
+disclosure program. Specifically:
+
+- No security.txt file at the standard well-known URI
+  (`https://creality.com/.well-known/security.txt`) as recommended by
+  RFC 9116
+- No security contact email address surfaced on the
+  consumer-facing Creality web properties
+- No CVD policy document published describing how researchers should
+  report findings, the merchant's response timeline, or remediation
+  process
+- No bug bounty program (e.g., HackerOne, Bugcrowd, Intigriti)
+  through which structured disclosure could occur
+- No alternative reporting channel documented (e.g., a separate
+  "security@" email, a PGP-published security key, or a published
+  vendor security advisory process)
+
+The implications:
+
+1. **Researchers documenting findings against Creality products have
+   no responsible-disclosure path to follow.** Industry-standard CVD
+   practice presumes the vendor provides a channel; the researcher
+   uses it; the vendor and researcher coordinate a disclosure window.
+   Creality's absence of any documented channel removes the responsible-
+   disclosure framework's vendor-side prerequisite.
+
+2. **Findings against Creality products default to public publication.**
+   In the absence of a vendor channel, the researcher's choices are
+   (a) publish without prior vendor notification, (b) attempt
+   informal customer-service-channel notification (which is not the
+   correct channel and typically does not reach security or legal
+   personnel), or (c) decline to publish. Industry norms support (a)
+   as the default when (b) is the only available alternative.
+
+3. **The absence of a CVD program is itself a security-posture
+   finding documentable to CISA and FCC.** CISA's CVD process
+   documentation (`cisa.gov/coordinated-vulnerability-disclosure-process`)
+   recommends manufacturers maintain CVD programs. Manufacturers
+   without them are documented as substandard relative to industry
+   practice. For PRC-domiciled consumer-IoT manufacturers, the
+   absence pairs with the architectural findings to produce a
+   defensible regulatory submission category.
+
+4. **This case file's publication is appropriately structured.** The
+   case file is published on a public GitHub repository with
+   continuing updates. There is no private disclosure obligation
+   because Creality has not established the vendor-side channel that
+   would create the obligation. The publication does not violate any
+   industry-standard disclosure norms; it follows the default
+   procedure when the vendor has no published process.
+
+The case file's regulatory escalation pathway is therefore unimpeded
+by responsible-disclosure considerations. Filings to FTC, CISA, state
+AGs, CFPB, Mozilla, and journalism outlets proceed on the timeline
+the investigator determines, without coordination with Creality. The
+investigator's structural communications to Creality (the dispute
+correspondence and the demand emails) are courtesy notifications, not
+CVD-process correspondence, and do not create an obligation to
+withhold publication or coordinate timing.
+
 ##### Cross-references
 
 - §1.4 documents the May 2026 outbound destination inventory; the
