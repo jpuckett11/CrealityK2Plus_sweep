@@ -627,6 +627,97 @@ behavior. The 2026-06-24 verification window was sufficient to
 confirm the continuous-camera-capture and persistent-cloud-
 registration findings.
 
+#### 1.13.9 30-minute ARP MITM packet capture, 2026-06-24 (PENDING analysis)
+
+A second verification was conducted 2026-06-24 immediately following
+the §1.13.8 live verification. The goal: capture the full egress
+traffic content (not just the connection-state metadata produced by
+/proc/net polling) over a 30-minute window long enough to include
+the periodic API polls, NTP synchronization, Sensors Analytics SDK
+telemetry burst, and any other event-driven outbound traffic that
+the shorter §1.13.8 window did not capture.
+
+##### Methodology
+
+The K2 Plus device does not have tcpdump installed and `opkg` has
+been stripped from the device, preventing in-place installation of
+packet-capture tooling. Two parallel approaches were used:
+
+1. **Workstation-side ARP MITM via ettercap** between the K2 Plus
+   (192.168.1.220) and the LAN gateway (192.168.1.254) on
+   interface wlp11s0, with concurrent tcpdump capture filtered to
+   `host 192.168.1.220` writing a full-packet pcap to disk. The
+   MITM redirects the K2 Plus's egress traffic through the
+   workstation, allowing the workstation to capture the unicast
+   traffic that would otherwise bypass it on the switched network.
+
+2. **Workstation-side /proc/net polling** of the K2 Plus via SSH
+   at 15-second intervals over the same 30-minute window. This
+   produces a connection-state and bandwidth time-series that
+   captures destinations and timing even where packet content is
+   encrypted or not visible to the MITM.
+
+The ARP MITM was scoped to a two-host pair (K2 Plus and gateway)
+with no third-party devices on the LAN affected. Run by the device
+owner on the device owner's own network.
+
+##### Captured artifacts
+
+- `/tmp/k2p_mitm_<timestamp>.pcap`: full-packet pcap from the
+  workstation-side tcpdump during ARP MITM
+- `k2plus_observation.log`: time-series of /proc/net/{tcp,tcp6,
+  udp,dev} samples at 15-second intervals over the 30-minute
+  window
+
+##### Analysis to be performed (PENDING)
+
+1. **Top destinations by bytes**: which external IPs received the
+   most data from the K2 Plus during the window
+2. **DNS query inventory**: every hostname the K2 Plus resolved
+   during the window, plus any IPs reached without prior DNS
+   (hardcoded IPs)
+3. **HTTP request inventory**: cleartext HTTP requests with host
+   and URI, identifying which Creality cloud endpoints fired
+4. **MQTT payload inventory**: the Alibaba Cloud MQTT connection
+   is cleartext per the May 2026 sweep §1.6; this longer window
+   will capture additional payload categories
+5. **TLS SNI inventory**: for encrypted destinations, the SNI
+   field in the ClientHello reveals the target hostname even
+   when payload content is encrypted
+6. **NTP destinations**: the hardcoded `time.neu.edu.cn`
+   (202.118.1.130, Northeastern University, Shenyang) connection
+   per §1.3 should fire at least once during the window
+7. **Sensors Analytics SDK**: the `sa/data` ingest pattern per
+   §1.9 should fire during the window if any user-interface or
+   user-action events occur on the device
+8. **AI feature traffic**: `ai-cn.crealitycloud.cn` and
+   `ai-usa.crealitycloud.com` per §1.8 - whether the AI endpoints
+   fire during the window will depend on whether the device's AI
+   features are exercised
+9. **Periodic API polls**: the `api.crealitycloud.com` polling
+   pattern per §1.4 fires every 1-2 seconds during print
+   operation; the window will capture the full 30-min cadence
+10. **WebRTC signaling**: the persistent WebRTC daemon (per §1.7
+    and §1.13.8) maintains cloud-side registration; the window
+    should capture the signaling-server endpoint
+11. **Bandwidth distribution by destination**: which destinations
+    receive the most bytes, which receive the most packets
+
+##### Findings (TO BE POPULATED)
+
+To be populated after pcap analysis completes. Each finding will
+reference the specific pcap timestamp range and the analytical
+tool used (tshark filter, MQTT payload extract, TLS SNI
+extraction).
+
+##### Cross-references
+
+- §1.4 documents the May 2026 outbound destination inventory; the
+  2026-06-24 30-min capture will confirm and extend
+- §1.13.8 documents the 2-minute live verification window; the
+  30-min capture provides the longer-window confirmation
+- §6.16 (reference materials) for analytical tool references
+
 #### 1.13.7 Critical-path chips warranting Depth 3 attention regardless of Depth 1/2 disposition (PENDING)
 
 To be populated. Per §6 methodology, the following chip categories
