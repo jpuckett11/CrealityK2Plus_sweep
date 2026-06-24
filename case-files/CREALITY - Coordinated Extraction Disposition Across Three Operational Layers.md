@@ -1173,6 +1173,68 @@ data-exfiltration resilience, documented in surveillance-malware
 analysis literature. The K2 Plus's implementation is operationally
 equivalent to that pattern regardless of stated intent.
 
+**No-app-open baseline: empirical confirmation of autonomous
+cloud-side data collection (2026-06-24)**
+
+The 2026-06-24 short-window MITM captures were conducted under
+controlled conditions:
+
+- No Creality phone app was running on any device on the LAN
+- No browser was open to the Creality web interface
+- No Creality slicer software was running on any computer on the LAN
+- No user interaction with any Creality cloud service was occurring
+- The K2 Plus was powered on and connected to the network but no
+  user activity was directed at the device or its cloud services
+
+Under these no-user-activity conditions, the K2 Plus continued to
+maintain outbound connections to:
+
+- Cloudflare-fronted `api.crealitycloud.com` (104.18.28.114, 104.18.29.114)
+- AWS US-East-1 endpoint 54.227.8.154 (Ashburn, Virginia)
+- Local network multicast (224.0.0.251, mDNS)
+- Gateway (192.168.1.254)
+
+The empirical significance: **the device's outbound cloud-side
+communication is autonomous, not user-driven.** It is the device's
+baseline behavior to maintain cloud-side connections, send telemetry,
+and respond to cloud-side polling regardless of whether any user is
+interacting with any Creality service.
+
+This is the conclusive empirical confirmation of the case file's
+broader architectural finding. Previous documentation (§1.13.8,
+§1.4, §1.6) established that the architecture was capable of
+autonomous operation. The no-app-open capture establishes that the
+architecture IS operating autonomously in actual deployed conditions
+on a customer's network.
+
+The user-protection implication: a customer who has the Creality app
+closed, has no browser open to the Creality service, and is not
+otherwise interacting with Creality cloud infrastructure has NOT thereby
+disconnected their device from Creality cloud infrastructure. The
+device continues to phone home regardless. The customer's only
+recourse for stopping the cloud-side data flow is router-level
+egress blocking of the entire constellation of Creality endpoints
+(API, MQTT, file CDN, image CDN, AWS endpoints, NTP-hardcoded IP),
+which requires technical sophistication beyond the typical consumer's
+capacity and which the device's hardcoded-NTP architecture (§1.3)
+deliberately defeats at the DNS level.
+
+The combined finding: the K2 Plus is engineered to maintain cloud-side
+data flow regardless of consumer interaction state, with architectural
+defenses against consumer-side blocking. The "cloud features" framing
+that justifies the architecture in marketing materials does not match
+the operational reality. Cloud features are user-controllable in
+legitimate consumer products; the K2 Plus's cloud-side activity is
+not user-controllable. The architecture is designed around persistent
+collection, not opt-in feature engagement.
+
+This finding is the lock-in evidence for the structural finding the
+umbrella case file rests on: the K2 Plus's operational disposition is
+extraction regardless of consumer interaction state, not feature
+delivery in response to consumer interaction. Empirical conditions
+verified 2026-06-24 with full network visibility and explicit no-user-
+activity controls.
+
 ##### Cross-references
 
 - §1.4 documents the May 2026 outbound destination inventory; the
