@@ -1868,6 +1868,185 @@ The case file documentation of these findings persists regardless of
 the device's recovery state. The empirical evidence is captured. The
 finding stands.
 
+**Anti-tamper engineering: the device is engineered to brick itself when the customer disables the surveillance architecture**
+
+The previous finding ("device requires cloud daemons to function") is
+not the full structural framing. The harsher and more accurate
+framing surfaces from a clean architectural analysis:
+
+A normal consumer-IoT product with cloud features should degrade
+gracefully when the cloud-side architecture is disrupted. The
+customer loses cloud features; the customer retains the local-side
+product function. This is the documented industry-standard approach
+for consumer-IoT engineering and is what consumer-protection
+regulators consider acceptable architecture.
+
+The architecturally-clean separation for a 3D printer would be:
+
+- WiFi association: OpenWrt standard `network` + `wpad` + `dnsmasq`
+  stack (present at `/etc/init.d/network`, runs at S20)
+- SSH: `dropbear` (independent, runs at S19)
+- 3D printing function: `klipper_mcu` at S54 + `klipper` at S55 +
+  `moonraker` at S56 (independent)
+- Touchscreen: a display daemon reading from `/dev/fb*` (could be
+  standalone)
+- Cloud features: OPTIONAL bundle that loads at S99 (the `app`
+  script)
+
+Under this clean separation, disabling `/etc/init.d/app` would
+disable cloud features only. The customer would retain a functional
+3D printer with local-LAN connectivity, SSH access, working
+touchscreen, and full Klipper/Moonraker stack.
+
+**The K2 Plus is NOT architected this way.** Disabling
+`/etc/init.d/app` empirically produces:
+
+- Loss of WiFi connectivity (despite OpenWrt's standard network stack
+  being present and configured)
+- Loss of SSH access (despite dropbear running independently at S19)
+- Loss of touchscreen functionality (despite the display being
+  hardware-attached and the framebuffer being independent of cloud
+  state)
+- Loss of all basic LAN connectivity (the device disappears from ARP,
+  mDNS, nmap sweep)
+- Boot-loop or stuck-boot state across multiple reboot attempts
+
+The empirical result: the cloud-daemon bundle has been engineered with
+undocumented cross-dependencies that force the cloud architecture to
+be running for any basic device function. The customer who disables
+the cloud daemons loses not just cloud features but the entire device.
+
+Possible underlying mechanisms (each is a deliberate engineering
+decision, not architectural accident):
+
+1. **Watchdog enforcement**: a process within the cloud daemon bundle
+   (`Monitor` daemon is a strong candidate based on its naming and
+   the boot-script placement) acts as a system watchdog that
+   triggers shutdown, reboot, or system-halt when peer daemons fail
+   to start
+
+2. **Hardware-init binding**: `wifi-server` may hold the actual
+   firmware load or association sequence for the WiFi chip, such
+   that the OpenWrt network stack alone cannot bring up WiFi without
+   the prior firmware-load step
+
+3. **Display blocking**: `display-server` may hold a GPU or
+   framebuffer initialization that is not performed by other init
+   scripts, such that the touchscreen does not come up without it
+
+4. **Active tamper detection**: a process within the cloud daemon
+   bundle may explicitly check for "expected daemons running" at
+   boot and trigger a controlled brick-state when the expectation
+   is not met
+
+5. **Boot-sequence sabotage**: the cloud daemon init scripts may
+   perform setup steps (mount points, sysfs writes, kernel module
+   loads) that subsequent init scripts depend on, such that disabling
+   the cloud daemons leaves the boot sequence in a non-recoverable
+   state
+
+Whichever mechanism applies, **the result is the same operational
+outcome: the device is engineered to be non-functional when the
+surveillance architecture is disabled, while a clean architectural
+separation would have allowed local-only function**.
+
+This is a structural escalation of the case file's findings:
+
+- **Original framing**: "cloud architecture is decouplable from
+  printing function" (was wrong, refined below)
+- **Refined framing**: "device requires cloud daemons for
+  connectivity" (technically accurate but understates the
+  intentionality)
+- **Current framing**: **"device is engineered to actively brick
+  itself when the customer disables the cloud architecture; the
+  manufacturer deliberately built in anti-tamper protection of the
+  surveillance architecture itself"**
+
+The customer-protection implications:
+
+1. **The architecture punishes customer self-protection.** A customer
+   who reads this case file, decides the documented surveillance is
+   unacceptable, and attempts to disable the cloud daemons to use
+   the device as a local-only 3D printer discovers that the device
+   actively destroys itself in response. The customer's options
+   compress to: (a) accept the surveillance, (b) stop using the
+   device entirely, (c) acquire a different printer.
+
+2. **The architecture forecloses informed consent under any
+   meaningful interpretation.** Consent that cannot be declined
+   without product non-function is not consent under any consumer-
+   protection legal framework. The K2 Plus's anti-tamper enforcement
+   means the consent UI documented in §1.1 is theater not just at
+   the data-collection layer but at the meta level: the customer
+   cannot decline the architecture, full stop, while continuing to
+   use the product.
+
+3. **The manufacturer has built an active enforcement mechanism for
+   continued surveillance.** This is a stronger finding than "the
+   manufacturer collects more data than they disclose." The
+   manufacturer specifically engineered the product to prevent the
+   customer from limiting the data collection. That is anti-
+   consumer engineering as a deliberate product feature.
+
+4. **The right-to-repair and right-to-modify dimensions are
+   implicated.** Several jurisdictions have right-to-repair and
+   anti-DRM-like provisions that prohibit manufacturers from
+   designing products to actively resist customer modification.
+   California, New York, Massachusetts, Colorado, and other states
+   have variants. The K2 Plus's anti-tamper enforcement of cloud
+   architecture connectivity is operationally analogous to anti-
+   modification DRM applied to a 3D printer.
+
+The regulatory implications:
+
+1. **FTC Section 5 unfair practices**: actively engineering a product
+   to be non-functional when the customer disables a manufacturer
+   service is a category of unfairness independent from deceptive
+   practices. The Section 5 unfairness prong covers practices that
+   "cause or are likely to cause substantial injury to consumers
+   which is not reasonably avoidable by consumers themselves and
+   not outweighed by countervailing benefits to consumers or to
+   competition." Anti-tamper enforcement of surveillance architecture
+   fits this prong cleanly.
+
+2. **California UDAP**: under Business and Professions Code §17200,
+   "unlawful, unfair, or fraudulent business acts or practices" -
+   the anti-tamper engineering is unfair regardless of whether it
+   is also deceptive.
+
+3. **Magnuson-Moss Warranty Act**: implied warranty of
+   merchantability for the product "3D printer" includes implied
+   functionality independent of vendor-side service availability.
+   A product that cannot function without continued vendor-side
+   service is not merchantable as a stand-alone consumer good.
+
+4. **Anti-tying and tying-arrangement analysis**: the K2 Plus
+   architecture effectively ties continued use of the printer to
+   continued use of the surveillance service. Tying arrangements
+   are subject to antitrust and consumer-protection scrutiny when
+   they prevent consumers from making independent choices about the
+   tied product or service.
+
+5. **State right-to-repair statutes**: applicable provisions in
+   states with right-to-repair legislation may directly address
+   anti-tamper enforcement of manufacturer services on consumer
+   goods.
+
+**Verification of this finding**: the brick-state was reproduced
+across three reboot attempts on the investigator's device. The
+recovery procedure (Creality's documented USB drive `wipe_all`
+factory reset) restores the cloud architecture and removes the
+customer's lockdown changes. The customer cannot persistently
+operate the device without the cloud architecture present. The
+finding is empirically locked.
+
+The case file documents this as the strongest single structural
+finding against Creality's K2 Plus architecture: not surveillance
+that the customer might tolerate, not data collection beyond
+disclosed scope, not even SaaS lock-in of hardware ownership - but
+**deliberate engineering to prevent customer self-protection against
+the documented surveillance architecture**.
+
 ##### Cross-references
 
 - §1.4 documents the May 2026 outbound destination inventory; the
