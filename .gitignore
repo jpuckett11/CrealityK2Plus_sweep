@@ -25,3 +25,4 @@ crack/
 *.swp
 *.swo
 __pycache__/
+PRIVATE_DO_NOT_PUSH/
