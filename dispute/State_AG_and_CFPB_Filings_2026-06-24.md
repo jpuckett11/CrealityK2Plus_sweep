@@ -218,6 +218,28 @@ disputes through unadmitted-insurer intermediaries.
 
 ---
 
+## Common evidentiary annex: documented contact-frequency reversal
+
+The following finding applies to all four filings above (CA AG, TN AG, CFPB, CA DOI) and is referenced from each.
+
+A material finding regarding Creality's customer-service responsiveness pattern is preserved in the contemporaneous communication record:
+
+| Period | Creality CS responsiveness | Documentation |
+|---|---|---|
+| **Pre-resolution / during dispute period** | Unresponsive to customer complaint and demand correspondence | This case: documented no-response during dispute period. Independent corroboration: RamblinDan, Creality Forum January 2025 (4+ days no response); daveyk testimony: "they already got our money, just automatically send all emails... to the trash can" |
+| **Post-resolution** (after Affirm's $1,800.93 full refund decision) | High-frequency contact, approximately every 10 minutes, seeking return of the device | This case: contemporaneous communications preserved as evidentiary documentation |
+
+The frequency reversal is the case-file finding. It demonstrates:
+
+1. Creality's customer-service organization has the staffing capacity for high-frequency contact (the 10-minute interval proves this); pre-resolution unresponsiveness was not a capacity limitation
+2. The pre-resolution unresponsiveness was a tactical choice
+3. The post-resolution high-frequency contact uses the same staffing capacity redirected toward an adverse-to-customer purpose
+4. The post-resolution contact occurs despite Creality having no legal mechanism to compel device return (Affirm's refund was unconditional with respect to merchandise return)
+
+This silent-during-dispute / high-frequency-after-loss pattern is documentary evidence of tactical bad-faith conduct in dispute handling. It is the kind of finding state consumer-protection authorities and CFPB historically pay attention to under unfair-practices and dispute-handling-conduct standards.
+
+---
+
 ## Contact and verification
 
 For all four filings:

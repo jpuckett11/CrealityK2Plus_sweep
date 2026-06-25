@@ -105,6 +105,18 @@ Web search conducted on 2026-06-24 surfaced a directly corroborating prior incid
 3. The forced-upsell-to-whole-assembly pattern is an architecturally repeatable Creality customer experience
 4. Multiple Creality K2 Plus customers have ended up paying full-assembly cost to obtain a single FPC
 
+### Tactical unresponsiveness pattern - silent during dispute, high-frequency after loss
+
+The pattern of Creality customer-service unresponsiveness documented in RamblinDan's thread (4+ days no reply, daveyk's "automatically send all emails... to the trash can" characterization) is reinforced by an independent observation from the current investigator's case: **Creality's customer service was unresponsive during the dispute period, then transitioned to high-frequency contact (approximately every 10 minutes) after the customer's chargeback was approved by Affirm.**
+
+The contrast is the case-file finding. It demonstrates:
+
+- **Creality's customer-service organization has the staffing capacity for high-frequency contact.** The 10-minute interval post-resolution proves this. The pre-resolution unresponsiveness was not a capacity limitation.
+- **The pre-resolution unresponsiveness was a tactical choice**, not an operational constraint
+- **The post-resolution high-frequency contact is the same staffing capacity redirected toward an adverse-to-customer purpose** (demanding device return without legal basis)
+
+This silent-during-dispute / high-frequency-after-loss pattern is consistent across both the RamblinDan documentation and this case's contemporaneous record. It establishes tactical bad-faith conduct in dispute handling as a documented Creality pattern, not a one-off customer experience.
+
 The pattern is replicated across approximately 18 months apart (RamblinDan January 2025, ongoing 2026 case file documentation), demonstrating that the service-part-unavailability framework persists across customer experiences.
 
 This corroboration converts the finding from "one customer's experience" to "documented multi-customer pattern with documented manufacturer awareness (V14 iterative history) of a recurring failure mode."

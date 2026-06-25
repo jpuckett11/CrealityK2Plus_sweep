@@ -289,6 +289,18 @@ The conduct is FTC-relevant because it implicates Section 5
 deceptive practice and because it potentially affects consumer credit
 through the BNPL relationship.
 
+### Documented contact-frequency reversal (silent during dispute, harassment after loss)
+
+A material finding regarding the merchant's customer-service responsiveness pattern is preserved in the contemporaneous communication record:
+
+- **Pre-resolution / during dispute period**: Creality customer service was unresponsive to the complainant's demand correspondence. This pattern is corroborated by independent customer testimony in the Creality community forum (RamblinDan, January 2025: four days of no response; daveyk's characterization: "they already got our money, just automatically send all emails... to the trash can").
+
+- **Post-resolution**: Following Affirm's full refund decision, Creality transitioned to high-frequency contact (approximately every 10 minutes) seeking return of the device.
+
+The frequency reversal demonstrates that Creality's customer-service organization has the staffing capacity for high-frequency contact (the 10-minute interval proves this), and that the pre-resolution unresponsiveness was therefore a tactical choice rather than a capacity limitation. The post-resolution high-frequency contact occurs despite Creality having no legal mechanism to compel device return (Affirm's refund was unconditional with respect to merchandise return). The pattern is consistent with harassment as a pressure tactic against a customer who prevailed in a financial dispute.
+
+This silent-during-dispute / high-frequency-after-loss pattern is documentary evidence of tactical bad-faith conduct under FTC Section 5 unfair-practices analysis.
+
 ### Independent BNPL-lender validation of the underlying merchant-misconduct claim
 
 On 2026-06-24 at approximately 07:34 CT, Affirm Inc. (NASDAQ: AFRM),

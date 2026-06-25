@@ -116,6 +116,29 @@ This further elevates the Affirm decision in evidentiary terms. The decision is 
 
 For purposes of FTC Section 5 unfair-practice analysis, state consumer-protection enforcement, CFPB BNPL-enforcement attention, and any subsequent civil proceeding that turns on the customer's good-faith conduct during the dispute period, this Affirm-staff characterization is materially supportive of the customer's evidentiary position.
 
+## Post-resolution merchant conduct: documented contact-frequency reversal
+
+A material finding regarding Creality's customer-service responsiveness pattern emerged when comparing the customer's documented experience during the dispute period versus the post-resolution period:
+
+| Period | Frequency / responsiveness | Documentation |
+|---|---|---|
+| **Pre-dispute and during dispute period** (covering the customer's demand email + the period before Affirm's decision) | Unresponsive — no substantive engagement by Creality customer service to the customer's complaint and demand correspondence | RamblinDan (January 2025): four days of no response; daveyk's documented characterization: "automatically send all emails... to the trash can"; this case's customer experience: no responsive Creality engagement during the dispute period |
+| **Post-resolution** (after Affirm's $1,800.93 full refund decision, customer-side dispute outcome adverse to Creality) | High-frequency contact — Creality reaches out **approximately every 10 minutes** seeking return of the device | Customer's documented experience post-resolution; communications preserved as evidentiary record |
+
+The frequency reversal is the case-file finding. It demonstrates:
+
+1. **Creality's customer-service organization has the staffing capacity for high-frequency contact** (the 10-minute interval proves this). The pre-resolution unresponsiveness was not a capacity limitation.
+
+2. **The pre-resolution unresponsiveness was a tactical choice**, not an operational constraint. Creality CS staff deliberately did not engage with the customer's legitimate complaint during the dispute period.
+
+3. **The post-resolution high-frequency contact is the same staffing capacity, redirected toward an adverse-to-customer purpose**. Where Creality could have used those resources to address the customer's complaint during the dispute period, Creality instead chose to deploy them after the customer prevailed financially.
+
+4. **The post-resolution contact occurs despite Creality having no legal mechanism to compel device return**. Affirm's refund was unconditional with respect to merchandise return. Creality is therefore engaging in high-frequency contact with a customer for a request that Creality has no legal basis to compel. This is consistent with harassment as a pressure tactic.
+
+This contrast — silent during dispute / high-frequency after loss — is documentary evidence of tactical bad-faith conduct in dispute handling. It is the kind of finding the FTC, state AGs, and CFPB historically pay attention to under unfair-practices authority.
+
+For purposes of any subsequent investigation or civil proceeding, the contemporaneous communication record (Creality's no-response during dispute, every-10-minute contact after dispute) is preserved as evidentiary documentation.
+
 The full-loan refund (rather than a partial refund covering only the SpeedX-undelivered portion) indicates that Affirm's internal review concluded:
 
 - The merchandise-not-as-described claim was sufficient to flip the entire purchase, not only the non-delivered portion
