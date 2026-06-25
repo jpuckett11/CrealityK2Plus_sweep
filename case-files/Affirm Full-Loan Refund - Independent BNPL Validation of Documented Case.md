@@ -122,12 +122,15 @@ A material finding regarding Creality's customer-service responsiveness pattern 
 
 | Period | Frequency / responsiveness | Documentation |
 |---|---|---|
+| **Approximately one month preceding the dispute resolution** (during which the customer had documented grievances and the merchant was on notice) | Approximately **4-5 emails total over the entire month** from Creality customer service | Customer's email archive |
 | **Pre-dispute and during dispute period** (covering the customer's demand email + the period before Affirm's decision) | Unresponsive — no substantive engagement by Creality customer service to the customer's complaint and demand correspondence | RamblinDan (January 2025): four days of no response; daveyk's documented characterization: "automatically send all emails... to the trash can"; this case's customer experience: no responsive Creality engagement during the dispute period |
-| **Post-resolution** (after Affirm's $1,800.93 full refund decision, customer-side dispute outcome adverse to Creality) | High-frequency contact — Creality reaches out **approximately every 10 minutes** seeking return of the device | Customer's documented experience post-resolution; communications preserved as evidentiary record |
+| **Post-resolution, first day** (after Affirm's $1,800.93 full refund decision, customer-side dispute outcome adverse to Creality) | **11 emails in the first day** from Creality customer service seeking return of the device, with the pattern continuing at approximately every 10 minutes through the same-day post-resolution period | Customer's documented experience post-resolution; communications preserved as evidentiary record |
 
-The frequency reversal is the case-file finding. It demonstrates:
+The frequency reversal is the case-file finding. The customer's archived email record establishes the quantitative magnitude: where the prior month saw approximately 4-5 customer-service emails total from Creality, the first day post-resolution saw **11 emails**. That is approximately a **50-100x increase in contact frequency** in a single 24-hour period coincident with the merchant losing the financial dispute.
 
-1. **Creality's customer-service organization has the staffing capacity for high-frequency contact** (the 10-minute interval proves this). The pre-resolution unresponsiveness was not a capacity limitation.
+This demonstrates:
+
+1. **Creality's customer-service organization has substantial staffing capacity for high-frequency contact** (11 emails in a single day, at approximately the 10-minute interval pattern, proves this). The pre-resolution unresponsiveness was not a capacity limitation.
 
 2. **The pre-resolution unresponsiveness was a tactical choice**, not an operational constraint. Creality CS staff deliberately did not engage with the customer's legitimate complaint during the dispute period.
 
