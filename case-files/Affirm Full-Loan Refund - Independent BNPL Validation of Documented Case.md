@@ -102,6 +102,20 @@ A BNPL lender that conducts technical-evidence review on a chargeback dispute (r
 
 This elevates the Affirm decision in evidentiary terms: it is not "Affirm took the customer at their word"; it is "Affirm reviewed the technical evidence and concluded the customer's claim is supported."
 
+### Affirm's substantive expression of appreciation to the customer
+
+Beyond the procedural refund decision, Affirm's dispute-analysis staff explicitly expressed appreciation to the customer for **"watching out for them and being honest"** during the dispute review. This was not a standard procedural acknowledgment of receipt; it was substantive feedback indicating that Affirm's professional staff:
+
+- Found the technical evidence sufficient to inform their dispute analysis on its merits
+- Recognized the customer's investigative work as providing material benefit to Affirm's risk-assessment posture (the customer's documentation surfaces merchant-side issues that affect Affirm's broader merchant-account portfolio and credit exposure)
+- Characterized the customer's representation throughout the dispute as honest
+
+A BNPL lender's dispute-analysis staff does not typically express this category of appreciation to a customer in a routine chargeback. The language is consistent with Affirm's staff viewing the customer's investigation as a positive contribution to Affirm's institutional risk awareness — beyond the immediate transaction-specific dispute.
+
+This further elevates the Affirm decision in evidentiary terms. The decision is not only **substantively supported by technical-evidence review** (as documented in the preceding subsection); it is also **explicitly endorsed by Affirm's professional staff** as honest representation worthy of appreciation. That elevates the third-party validation from "lender approved the claim" to "lender explicitly characterized the customer's representation as honest and the documentation as worthy of thanks."
+
+For purposes of FTC Section 5 unfair-practice analysis, state consumer-protection enforcement, CFPB BNPL-enforcement attention, and any subsequent civil proceeding that turns on the customer's good-faith conduct during the dispute period, this Affirm-staff characterization is materially supportive of the customer's evidentiary position.
+
 The full-loan refund (rather than a partial refund covering only the SpeedX-undelivered portion) indicates that Affirm's internal review concluded:
 
 - The merchandise-not-as-described claim was sufficient to flip the entire purchase, not only the non-delivered portion
